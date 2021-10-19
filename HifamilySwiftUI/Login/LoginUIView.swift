@@ -280,6 +280,7 @@ struct LoginView: View {
                             }
                             objectId = user.objectId!
                             isShowLoading = false
+//                            var userId = user.createrId!
                             print("1\(isPressed1)")
                             print(user)
                         

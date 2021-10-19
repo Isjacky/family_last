@@ -53,7 +53,7 @@ struct HomeView: View {
         ZStack(alignment: .leading) {
             VStack{
                 //title
-                Title(showLeftMenu : $showLeftMenu)
+                Title(isPersonPresented: $isPersonPresented, showLeftMenu : $showLeftMenu)
                 Divider()
                 //title 下面部分
                 TitleDown(familyIdWrite: $familyIdWrite, familyMemberCountWrite: $familyMemberCountWrite,familyTreeWrite:$familyTreeWrite,isHaveTree :$isHaveTree,indexTree:$indexTree)
@@ -238,6 +238,20 @@ struct AddFamilyButton: View {
                         _ = query.find { result in
                             switch result {
                             case .success(objects: _):
+                                let InvitationUser = LCObject(className: "InvitationUser")
+                                InvitationUser.treeId = Int(familyIDAlert)
+                                InvitationUser.userId = LCApplication.default.currentUser?.id
+                                
+                                _ =  InvitationUser.save { result in
+                                      switch result {
+                                      case .success:
+                                          // 成功保存之后，执行其他逻辑
+                                          break
+                                      case .failure(error: let error):
+                                          // 异常处理
+                                          print(error)
+                                      }
+                                  }
                                 print("right")
                                 break
                             case .failure(error: let error):
@@ -340,6 +354,7 @@ struct CustomTextField: UIViewRepresentable {
 }
 
 struct Title: View {
+    @Binding var isPersonPresented: Bool
     @Binding var showLeftMenu : Bool
     var body: some View {
         HStack {
@@ -360,14 +375,14 @@ struct Title: View {
             
             Spacer()
             Button(action: {
-//                    self.isPersonPresented = true
+                    self.isPersonPresented = true
                 
             }) {
                 Image("person")
             }
-//            .fullScreenCover(isPresented: $isPersonPresented, content: {
-//                /*@START_MENU_TOKEN@*//*@PLACEHOLDER=Content@*/Text("Placeholder")/*@END_MENU_TOKEN@*/
-//            })
+            .fullScreenCover(isPresented: $isPersonPresented, content: {
+                InformUIView()
+            })
             
         }.padding(15)
     }

@@ -56,6 +56,7 @@ struct IsCreaterView: View {
                     isPressed = true
                     isLogin = true
                     error2 = updateUser(objectId1: objectId, status1: status)
+                    
                 }) {
                     HStack {
                         Text("加入者")

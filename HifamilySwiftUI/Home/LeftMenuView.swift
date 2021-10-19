@@ -20,6 +20,7 @@ struct LeftMenuView: View {
                     .font(.headline)
             }
             .padding(.top, 100)
+            .border(Color.white)
             HStack{
                 Image(systemName: "envelope")
                     .foregroundColor(.gray)

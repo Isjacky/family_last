@@ -13,6 +13,7 @@ struct WhetherLoginBeforeUIView: View {
     @Binding var isPressed1 : Bool
     @Binding var objectId:LCString
     var body: some View {
+        
         LoginUIView(isLogin: $isLogin, isFirstLogin: $isFirstLogin, isPressed1: $isPressed1, objectId: $objectId)
          
             .fullScreenCover(isPresented: $isLogin, onDismiss: {

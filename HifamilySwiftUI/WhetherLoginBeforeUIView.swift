@@ -15,7 +15,12 @@ struct WhetherLoginBeforeUIView: View {
     var body: some View {
         
         LoginUIView(isLogin: $isLogin, isFirstLogin: $isFirstLogin, isPressed1: $isPressed1, objectId: $objectId)
-         
+      
+            .fullScreenCover(isPresented: $isPressed1, onDismiss: {
+                            print("3\(isPressed1)")
+                        }) {
+                IsCreaterView(objectId: $objectId,isPressed:$isPressed1, isLogin: $isLogin)
+                        }
             .fullScreenCover(isPresented: $isLogin, onDismiss: {
                             print("Detail View Dismissed")
                         }) {

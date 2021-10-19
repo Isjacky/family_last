@@ -8,6 +8,27 @@
 import SwiftUI
 import LeanCloud
 
+final class User : ObservableObject {
+    @Published var objectId : String
+    @Published var familyPosition : Int
+    @Published var familyTreeId : Int
+    @Published var id : Int
+    @Published var isFirstLogin : Bool
+    @Published var missNum : Int
+    @Published var status : Int
+    @Published var username : String
+    init(){
+        objectId = ""
+        familyPosition = 0
+        familyTreeId = 0
+        id = 0
+        isFirstLogin = true
+        missNum = 0
+        status = 0
+        username = ""
+    }
+}
+
 
 struct LoginUIView: View {
     
@@ -220,6 +241,7 @@ struct LoginView: View {
     @Binding var isPressed1 : Bool
     @Binding var objectId : LCString
     var body: some View {
+    
         VStack{
             Text("忘记密码?")
                 .bold()
@@ -227,6 +249,7 @@ struct LoginView: View {
                 .foregroundColor(.gray)
                 .padding(.bottom,10)
                 .padding(.leading, UIScreen.main.bounds.width/2+59)
+            
             Button(action: {
                 if pageType == "signup"{
                     isShowLoading = true
@@ -244,8 +267,8 @@ struct LoginView: View {
                             break
                         case .failure(error: let error):
                             
-                            errorReason = error.reason!;
-                            isLoginError = true;
+                    
+        
                             isShowLoading = false
                             print(error)
                         }
@@ -309,18 +332,21 @@ struct LoginView: View {
             
             .alert(isPresented: $isLoginError, content: {
                 Alert(title: Text("出错了"),
-//                                  message: Text("\(errorReason)"),
-                                    message: Text(pageType == "signin" ? "登录失败":"注册失败"),
+                                  message: Text("\(errorReason)"),
+//                                    message: Text(pageType == "signin" ? "登录失败":"注册失败"),
                                   dismissButton: .default(Text("OK")))
                 
             })
-            .fullScreenCover(isPresented: $isPressed1, onDismiss: {
-                            print("3\(isPressed1)")
-                        }) {
-                            IsCreaterView(objectId: $objectId,isLogin: $isLogin)
-                        }
-            
-            
+    
+//            if(isLogin == true){
+//                NavigationLink(destination: HomeUIView()){
+//
+//                }
+//            }else if(isPressed1){
+//                NavigationLink(destination:IsCreaterView(objectId: $objectId, isLogin: $isLogin)){
+//
+//                }
+//            }
             VStack{
                 
                 ZStack{
@@ -359,4 +385,5 @@ struct LoginView: View {
         }
         .padding(.top,15)
     }
+    
 }

@@ -295,6 +295,7 @@ struct LoginView: View {
                     _ = LCUser.logIn(username: username, password: password) { result in
                         switch result {
                         case .success(object: let user):
+                            
                             isFirstLogin = user.isFirstLogin as! LCBool
                             if(isFirstLogin == true){
                                 isPressed1 = true
@@ -305,7 +306,8 @@ struct LoginView: View {
                             isShowLoading = false
 //                            var userId = user.createrId!
                             print("1\(isPressed1)")
-                            print(user)
+                            print("2\(isLogin)")
+//                            print(user)
                         
                         case .failure(error: let error):
                             errorReason = error.reason!;

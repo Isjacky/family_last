@@ -33,6 +33,12 @@ struct HomeView: View {
     //左边菜单栏
     @State var showLeftMenu = false
    
+    
+    @Binding var isLogin : Bool
+    @Binding var isFirstLogin : LCBool
+    @Binding var isPressed1 : Bool
+    @Binding var objectId:LCString
+    
     var body: some View {
         
         let drag = DragGesture()
@@ -53,7 +59,7 @@ struct HomeView: View {
         ZStack(alignment: .leading) {
             VStack{
                 //title
-                Title(isPersonPresented: $isPersonPresented, showLeftMenu : $showLeftMenu)
+                Title(isPersonPresented: $isPersonPresented, showLeftMenu : $showLeftMenu,isLogin: $isLogin,isFirstLogin: $isFirstLogin,isPressed1: $isPressed1,objectId: $objectId)
                 Divider()
                 //title 下面部分
                 TitleDown(familyIdWrite: $familyIdWrite, familyMemberCountWrite: $familyMemberCountWrite,familyTreeWrite:$familyTreeWrite,isHaveTree :$isHaveTree,indexTree:$indexTree)
@@ -177,12 +183,12 @@ struct FamilyBlackboard: View {
         }
     
     }
-struct HomeView_Previews: PreviewProvider {
-    static var previews: some View {
-        HomeView()
-            
-    }
-}
+//struct HomeView_Previews: PreviewProvider {
+//    static var previews: some View {
+//        HomeView()
+//
+//    }
+//}
 }
 
 
@@ -356,6 +362,12 @@ struct CustomTextField: UIViewRepresentable {
 struct Title: View {
     @Binding var isPersonPresented: Bool
     @Binding var showLeftMenu : Bool
+    
+    @Binding var isLogin : Bool
+    @Binding var isFirstLogin : LCBool
+    @Binding var isPressed1 : Bool
+    @Binding var objectId:LCString
+    
     var body: some View {
         HStack {
             Image("three line")
@@ -381,7 +393,7 @@ struct Title: View {
                 Image("person")
             }
             .fullScreenCover(isPresented: $isPersonPresented, content: {
-                InformUIView()
+                InformUIView(isLogin: $isLogin,isFirstLogin: $isFirstLogin,isPressed1: $isPressed1,objectId: $objectId)
             })
             
         }.padding(15)

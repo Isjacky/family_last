@@ -8,12 +8,43 @@
 import SwiftUI
 import LeanCloud
 
+
+struct Role: Hashable {
+    let name: String
+    let gender: String
+
+    static let roles = [
+        Role(name: "", gender: "男"),
+        Role(name: "李白", gender: "男"),
+        Role(name: "李嘉誠", gender: "男"),
+        Role(name: "彼得潘", gender: "男"),
+        Role(name: "奇妙仙子", gender: "女")
+    ]
+}
+
 struct InformUIView: View {
     @Environment(\.presentationMode) var presentationModess
     @State var isCreater = true;
     @State var username = ""
     @State var phone = ""
+    @State var familyPosition = -1
+    @State var userId = -1
+    @State var familyName = ""
+    @State var familyStatus = 0
     
+    @Binding var isLogin:Bool
+    @Binding var isFirstLogin : LCBool
+    @Binding var isPressed1 : Bool
+    @Binding var objectId : LCString
+    
+    @State var isToLogin = false
+    @State var isAlert = false
+    
+    @State var isPicker = false
+    
+    @State private var selectedRole = Role.roles[0]
+    @State var rolesArray = Array<String>()
+    @State private var selectedIndex = -1
     
     var body: some View {
         
@@ -22,6 +53,27 @@ struct InformUIView: View {
         VStack {
             //返回按钮
             Button(action: {
+                do{
+                let user = LCObject(className: "_User",objectId: (LCApplication.default.currentUser?.objectId)!)
+                    try user.set("familyPosition", value: ($selectedIndex as! LCValueConvertible))
+                    try! user.set("username",value:$username as? LCValueConvertible)
+                    user.save { (result) in
+                           switch result {
+                           case .success:
+                               break
+                           case .failure(error: let error):
+                               print(error)
+                           }
+                       }
+                    if(familyStatus == 1){
+//                        let familyTree = LCObject(className: "familyTree")
+                        
+                    }
+
+                    
+                }catch{
+                    print(error)
+                }
                 self.presentationModess.wrappedValue.dismiss()//返回的方法
             }) {
                 HStack {
@@ -67,70 +119,188 @@ struct InformUIView: View {
             .padding(.bottom,20)
             
             
-            VStack {
-                Form{
-                    HStack {
-                        Text("家庭身份")
-                        TextField(/*@START_MENU_TOKEN@*/"Placeholder"/*@END_MENU_TOKEN@*/, text: /*@START_MENU_TOKEN@*//*@PLACEHOLDER=Value@*/.constant("")/*@END_MENU_TOKEN@*/)
-                    }
-                    
-                    if isCreater{
+            ZStack {
+                
+               
+                VStack {
+                    Form{
                         HStack {
-                            Text("家庭树名字")
-                            TextField(/*@START_MENU_TOKEN@*/"Placeholder"/*@END_MENU_TOKEN@*/, text: /*@START_MENU_TOKEN@*//*@PLACEHOLDER=Value@*/.constant("")/*@END_MENU_TOKEN@*/)
+                            Text("家庭身份")
+                                .padding(.trailing,15)
+                            if(selectedIndex == -1){
+                                TextField("请选择您的家庭身份", text: /*@START_MENU_TOKEN@*//*@PLACEHOLDER=Value@*/.constant("")/*@END_MENU_TOKEN@*/)
+                            }else{
+                                Text("\(rolesArray[selectedIndex])")
+                                    
+                            }
+                            
+                        
                         }
+                        .onTapGesture {
+                            isPicker = true
+                        }
+                        
+                        if isCreater{
+                            HStack {
+                                Text("家庭树名字")
+                                TextField(/*@START_MENU_TOKEN@*/"Placeholder"/*@END_MENU_TOKEN@*/, text: $familyName)
+                            }
+                        }
+                       
+                       
                     }
-                }
-                .frame(width:geo.size.width - 20,height: 150, alignment: /*@START_MENU_TOKEN@*/.center/*@END_MENU_TOKEN@*/)
-                .cornerRadius(20)
-                .offset(x: -5)
-                .padding(.bottom,5)
-                
-                Form {
-                    HStack {
-                        Text("昵称")
-                        TextField("请输入昵称", text: $username)
-                    }
-//                    HStack {
-//                        Text("性别")
-//                        TextField("请选择性别", text: /*@START_MENU_TOKEN@*//*@PLACEHOLDER=Value@*/.constant("")/*@END_MENU_TOKEN@*/)
-//                    }
-                    HStack {
-                        Text("手机号")
-                        TextField("请输入手机号", text: $phone)
-                    }
+                    .frame(width:geo.size.width - 20,height: 150, alignment: /*@START_MENU_TOKEN@*/.center/*@END_MENU_TOKEN@*/)
+                    .cornerRadius(20)
+                    .offset(x: -5)
+                    .padding(.bottom,5)
                     
+                    Form {
+                        HStack {
+                            Text("昵称")
+                                .padding(.trailing,15)
+                            TextField("请输入昵称", text: $username)
+                        }
+                        HStack {
+                            Text("手机号")
+                            if(phone == ""){
+                                TextField("请输入手机号", text: $phone)
+                            }else{
+                                Text(phone)
+                            }
+                            
+                        }
+                        
+                        
+                    }
+                    .frame(width:geo.size.width - 20,height: 150, alignment: /*@START_MENU_TOKEN@*/.center/*@END_MENU_TOKEN@*/)
+                    .cornerRadius(20)
+                    .offset(x: -5)
+                    .padding(.bottom,20)
                     
                 }
-                .frame(width:geo.size.width - 20,height: 200, alignment: /*@START_MENU_TOKEN@*/.center/*@END_MENU_TOKEN@*/)
-                .cornerRadius(20)
-                .offset(x: -5)
-                .padding(.bottom,20)
-                
+                if(isPicker){
+
+                    Picker(selection: $selectedIndex, label: /*@START_MENU_TOKEN@*/Text("Picker")/*@END_MENU_TOKEN@*/) {
+                        ForEach(rolesArray.indices) { item in
+                                           HStack {
+                                               Image(systemName: "\(item+1).circle.fill")
+                                                .foregroundColor(Color("AccentColor"))
+                                               Text(rolesArray[item])
+                                                .foregroundColor(Color("AccentColor"))
+                                           }
+                                           .onTapGesture {
+                                               isPicker = false
+                                           }
+                                       }
+                    }
+                    .offset(x:-5,y:20)
+                    .frame(width: 300)
+                    .background(Color(hue: 0.105, saturation: 0.07, brightness: 0.527))
+                    .cornerRadius(30)
+                    .padding()
+                    .shadow(color: Color("AccentColor"), radius: 3, x: 2, y: 2.0)
+                    
+                }
             }
-            Button(action: /*@START_MENU_TOKEN@*//*@PLACEHOLDER=Action@*/{}/*@END_MENU_TOKEN@*/) {
+            Button(action: {
+                LCUser.logOut()
+                let currentUser = LCApplication.default.currentUser
+                isToLogin = true
+                print(currentUser as Any)
+                
+            }) {
                 Text("退出当前账号")
                     .font(.headline)
                     .frame(width:UIScreen.main.bounds.width - 90*2,height:56)
                     .background(Color.orange)
                     .foregroundColor(.white)
                     .cornerRadius(30)
-//                    .padding(.top,30)
             }
             Spacer()
             }
+        
+        .sheet(isPresented: $isToLogin, onDismiss: {
+            if(isLogin == true){
+                isToLogin = false
+            }
+                isAlert = true
+                    }) {
+            LoginUIView(isLogin: $isLogin, isFirstLogin: $isFirstLogin, isPressed1: $isPressed1, objectId: $objectId)
+
+                    }
+        .alert(isPresented: $isAlert, content: {
+            Alert(title: Text(isLogin ? "登陆成功":"出错了"),
+                  message: Text(isLogin ? "开启您的家庭之旅":"请先登录账号"),
+            dismissButton: .default(Text("OK"),
+                                    action: {
+                                        if(isLogin == false){
+                                            isToLogin = true
+                                        }
+                                    }))
+            
+        })
+        
             .onAppear(){
+                
+                //获取个人信息
                 let objectId = LCApplication.default.currentUser?.objectId
                 let query = LCQuery(className: "_User")
                 let _ = query.get(objectId!) { (result) in
                     switch result {
                     case .success(object: let todo):
+                        
                         let username = todo.username?.stringValue
-                        let mobilePhoneNUmber = todo.mobilePhoneNUmber?.stringValue
+                        if todo.mobilePhoneNUmber?.stringValue != nil {
+                            let mobilePhoneNUmber = todo.mobilePhoneNUmber?.stringValue
+                            self.phone = mobilePhoneNUmber!
+                        }
+                        if todo.familyPosition?.intValue != nil {
+                            let familyPosition = todo.familyPosition?.intValue
+                            self.familyPosition = familyPosition!
+                            self.selectedIndex = familyPosition!
+                        }
+                        let createrId = todo.id?.intValue
                         self.username = username!
-                        self.phone = mobilePhoneNUmber!
-                    case .failure(error: let error):
-                        print(error)
+                        let status = todo.status?.intValue
+                        self.familyStatus = status!
+                        if status == 1{
+                            
+                            let familyTree = LCQuery(className: "familyTree")
+                            familyTree.whereKey("createrId", .equalTo(createrId!))
+                            _ = familyTree.find { result in
+                                switch result {
+                                case .success(objects: let tree):
+                                    for item in tree{
+                                    let treeName = item.familyName?.stringValue!
+                                        self.familyName = treeName!
+                                    print("家庭树的名字\(familyName)")
+                                    }
+                                    break
+                                        
+                                case .failure(error: let error):
+                                    print(error)
+                                }
+                            }
+                        }
+
+                    case .failure(error: let error1):
+                        print(error1)
+                    }
+            //获取家庭成员关身份
+                    let familyMember = LCQuery(className: "FamilyMember")
+                    _ = familyMember.find { result in
+                        switch result {
+                        case .success(objects: let member):
+                            print(member)
+                            for item in member{
+                                let str1 = item.familyMember?.stringValue
+                                self.rolesArray.append(str1!)
+                            }
+                            
+                            break
+                        case .failure(error: let error):
+                            print(error)
+                        }
                     }
                 }
                 
@@ -141,27 +311,9 @@ struct InformUIView: View {
     }
 }
 
-struct InformUIView_Previews: PreviewProvider {
-    static var previews: some View {
-        InformUIView()
-    }
-}
+//struct InformUIView_Previews: PreviewProvider {
+//    static var previews: some View {
+//        InformUIView(isLogin: <#Binding<Bool>#>, isFirstLogin: <#Binding<LCBool>#>, isPressed1: <#Binding<Bool>#>, objectId: <#Binding<LCString>#>)
+//    }
+//}
 
-//let familyTree = LCObject(className: "familyTree")
-//familyTree.createrId = LCApplication.default.currentUser?.id
-//_ = familyTree.save { result in
-//      switch result {
-//      case .success:
-//          // 成功保存之后，执行其他逻辑
-//        status = 1
-//        isLoginBefore = true
-//        isPressed = true
-//        isLogin = true
-//        error2 = updateUser(objectId1: objectId, status1: status)
-//        print("创建家庭树成功")
-//          break
-//      case .failure(error: let error):
-//          // 异常处理
-//          print("创建家庭树失败\(error)")
-//      }
-//  }

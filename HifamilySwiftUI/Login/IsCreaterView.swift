@@ -31,6 +31,20 @@ struct IsCreaterView: View {
                     isPressed = false
                     isLogin = true
                     error2 = updateUser(objectId1: objectId, status1: status)
+                    //创建一个家庭树
+                    let familyTree = LCObject(className: "familyTree")
+                    familyTree.createrId = LCApplication.default.currentUser?.id
+                    _ = familyTree.save { result in
+                          switch result {
+                          case .success:
+                              // 成功保存之后，执行其他逻辑
+                            print("创建家庭树成功")
+                              break
+                          case .failure(error: let error):
+                              // 异常处理
+                              print("创建家庭树失败\(error)")
+                          }
+                      }
                 }) {
                     HStack {
                         Text("创建者")

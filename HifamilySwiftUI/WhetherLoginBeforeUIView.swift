@@ -12,6 +12,8 @@ struct WhetherLoginBeforeUIView: View {
     @Binding var isFirstLogin : LCBool
     @Binding var isPressed1 : Bool
     @Binding var objectId:LCString
+    
+    @State var isAnimating = false
     var body: some View {
         
         LoginUIView(isLogin: $isLogin, isFirstLogin: $isFirstLogin, isPressed1: $isPressed1, objectId: $objectId)
@@ -24,8 +26,15 @@ struct WhetherLoginBeforeUIView: View {
             .fullScreenCover(isPresented: $isLogin, onDismiss: {
                             print("Detail View Dismissed")
                         }) {
-                            HomeUIView()
+                HomeUIView(isLogin: isLogin, isFirstLogin: $isFirstLogin, isPressed1: $isPressed1, objectId: $objectId)
+                                .opacity(isAnimating ? 1 : 0)
+                                .animation(Animation.spring().delay(0.2))
+                                .onAppear{
+                                    self.isAnimating.toggle()
+                                }
+                
                         }
+        
     }
 }
 

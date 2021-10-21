@@ -16,6 +16,7 @@ struct HomeUIView: View {
     @Binding var isPressed1 : Bool
     @Binding var objectId:LCString
     
+    @ObservedObject var miss:Miss = Miss()
     var body: some View {
         TabView(selection: $index) {
 //            FamilyTreeView()
@@ -23,7 +24,10 @@ struct HomeUIView: View {
             LetterView().tabItem { Image(index == 2 ? "Iconly-Bulk-Message" : "fIconly-Bulk-Message") }.tag(2)
             HomeView(isLogin: $isLogin,isFirstLogin: $isFirstLogin,isPressed1: $isPressed1,objectId: $objectId).tabItem { Image( index == 3 ? "fIconly-Bulk-Home" : "Iconly-Bulk-Home") }.tag(3)
             LoveView(familyTree: familyTree).tabItem { Image( index == 4 ? "Iconly-Bulk-Heart" : "fIconly-Bulk-Heart") }.tag(4).onAppear(perform: {
+            HomeView().tabItem { Image( index == 3 ? "fIconly-Bulk-Home" : "Iconly-Bulk-Home") }.tag(3)
+            LoveView(familyTree: familyTree,miss:miss).tabItem { Image( index == 4 ? "Iconly-Bulk-Heart" : "fIconly-Bulk-Heart") }.tag(4).onAppear(perform: {
                 familyTree.queryUser()
+                miss.queryMiss()
             })
         
             MyTimeLineView().tabItem { Image(index == 5 ? "fIconly-Bulk-Chart" : "Iconly-Bulk-Chart") }.tag(5)

@@ -34,6 +34,11 @@ struct MyButtonStyle : ButtonStyle{
 
     }
 }
+func checkDay(date:Date)->String{
+    let dateFormatter = DateFormatter()
+    dateFormatter.timeStyle = .short
+    return dateFormatter.string(from: date)
+}
 func checkDiff(date:Date) -> Int {
   // 计算两个日期差，返回相差天数
   let formatter = DateFormatter()
@@ -67,16 +72,189 @@ func checkDiff(date:Date) -> Int {
             num.append(number)
         }
     }
-    
+final class Miss : ObservableObject{
+    @Published var MissMember : [LCObject]
+    @Published var MissToday : [String]
+    @Published var MissHistory : [String]
+    @Published var MissByHistory : [String]
+    @Published var missCount : [Int]
+    @Published var missByCount : [Int]
+    @Published var dateTime : [String]
+    @Published var Content : [String]
+    @Published var member : [String]
+    init(){
+        MissMember = []
+        MissToday  = []
+        MissHistory = []
+        MissByHistory = []
+        dateTime = []
+        Content = []
+        missCount = []
+        missByCount = []
+        member = ["我","爸爸","妈妈","爷爷","奶奶","外婆","外公","孙子","孙女","舅舅"]
+    }
+    func setempty(){
+        missCount = []
+        missByCount = []
+        MissHistory = []
+        MissByHistory = []
+    }
+    func queryMiss(){
+        let objectId = LCApplication.default.currentUser?.objectId?.value
+        let missQuery = LCQuery(className: "Miss")
+        missQuery.whereKey("receiver",.equalTo(objectId!))
+        missQuery.whereKey("createdAt",.descending)
+        missQuery.limit = 10
+        print("哈哈")
+        _ = missQuery.find(){ (result) in
+            switch result {
+           
+                case .success(objects: let miss):
+                    self.MissMember = miss
+                    for item in miss{
+                        print("miss\((item.updatedAt?.dateValue!)!)")
+                        if(checkDiff(date: (item.updatedAt?.dateValue!)!)<=1){
+                          
+                            self.MissToday.append((item.receiver?.stringValue!)!)
+                            let contentQuery = LCQuery(className: "_User")
+                            contentQuery.whereKey("objectId",.equalTo((item.receiver?.stringValue!)!))
+                            _ = contentQuery.getFirst(){ (result) in
+                            switch result {
+                                case .success(object: let todo):
+                                    print("miss\((todo.missContent?.stringValue!)!)")
+                                    self.Content.append((todo.missContent?.stringValue!)!)
+                                case .failure(error: let error):
+                                    print(error)
+                                }
+                            }
+                            self.dateTime.append(checkDay(date: (item.updatedAt?.dateValue!)!))
+                        }
+                        
+                    }
+                    
+                    break
+                case .failure(error: let error):
+                    print(error)
+            }
+        }
+    }
+    func queryToday(){
+        
+    }
+    func queryMissByHistory(){
+        let serial = DispatchQueue(label: "serial",attributes: .init(rawValue:0))
+        serial.sync {
+        
+        let objectId = LCApplication.default.currentUser?.objectId?.value
+        let missQuery = LCQuery(className: "Miss")
+        print("123")
+        var set = Set<String>()
+        missQuery.whereKey("receiver",.equalTo(objectId!))
+        _ = missQuery.find(){ (result) in
+            switch result {
+                case .success(objects: let miss):
+                    do{
+                    for item in miss{
+                        set.insert((item.sender?.stringValue)!)
+                    }
+                    for i in set{
+                        let selectCount1 = LCQuery(className:"Miss")
+                        selectCount1.whereKey("receiver",.equalTo(objectId!))
+                        selectCount1.whereKey("sender", .equalTo("\(i)"))
+                        let count = selectCount1.count().intValue
+                        self.missByCount.append(count)
+                        let selectQuery1 = LCQuery(className: "_User")
+                        print("\(i)")
+                        selectQuery1.whereKey("objectId", .equalTo("\(i)"))
+                    
+                        _ = selectQuery1.getFirst { result in
+                            switch result {
+                            case .success(object: let todo):
+                                print("hj")
+                                let title = todo.familyPosition?.intValue!
+                                self.MissByHistory.append(self.member[title!])
+                                print("\(self.member[title!])")
+                            case .failure(error: let error):
+                                print(error)
+                            }
+                        }
+                    }
+                    }
+                    break
+                case .failure(error: let error):
+                    print(error)
+                }
+        }
+        }
+    }
+    func queryMissHistory(){
+//        let serial = DispatchQueue(label: "serial",attributes: .init(rawValue:0))
+//
+        let objectId = LCApplication.default.currentUser?.objectId?.value
+        let missQuery = LCQuery(className: "Miss")
+        var set = Set<String>()
+        missQuery.whereKey("sender",.equalTo(objectId!))
+        _ = missQuery.find(){ (result) in
+            switch result {
+                case .success(objects: let miss):
+                    do{
+                    for item in miss{
+                        if(set.contains((item.receiver?.stringValue)!)){
+                            break
+                        }
+                        else{
+                            let selectCount = LCQuery(className:"Miss")
+                            selectCount.whereKey("sender",.equalTo(objectId!))
+                            selectCount.whereKey("receiver", .equalTo("\(( item.receiver?.stringValue)!)"))
+                            let count = selectCount.count().intValue
+                            self.missCount.append(count)
+                            let selectQuery1 = LCQuery(className: "_User")
+                            selectQuery1.whereKey("objectId",  .equalTo("\(( item.receiver?.stringValue)!)"))
+                            _ = selectQuery1.getFirst { result in
+                                switch result {
+                                case .success(object: let todo):
+                                    print("hj")
+                                    let title = todo.familyPosition?.intValue!
+                                    self.MissHistory.append(self.member[title!])
+                                    print("\(self.member[title!])")
+                                case .failure(error: let error):
+                                    print(error)
+                                }
+                            }
+                            set.insert((item.receiver?.stringValue)!)
+                        }
+                        for se in set {
+                            print("这时个\(se)")
+                        }
+                    }
+                    }
+                    break
+                case .failure(error: let error):
+                    print(error)
+                }
+            
+        }
+        
+    }
+}
+
+
+
+
+
+
     final class FamilyTree: ObservableObject {
      
         @Published var familyTreeId : LCNumber
         @Published var missNum : Int
         @Published var familyMember : [LCObject]
+        @Published var missContent : String
+        
         init(){
             familyTreeId = 0
             familyMember = []
             missNum = 0
+            missContent = ""
         }
         func updateTreeId(treeId : LCNumber){
             self.familyTreeId = treeId
@@ -94,6 +272,7 @@ func checkDiff(date:Date) -> Int {
                 case .success(object: let user):
                     self.missNum = (user.missNum?.intValue!)!
                     self.familyTreeId = user.familyTreeId as! LCNumber
+                    self.missContent = (user.missContent?.stringValue)!
                     print("TreeId\(self.familyTreeId)")
                     let query = LCQuery(className: "_User")
                     query.whereKey("familyTreeId",.equalTo(self.familyTreeId) )
@@ -114,12 +293,8 @@ func checkDiff(date:Date) -> Int {
                     print(error)
                 }
             }
-            
-            
         }
-        
     }
-
 func queryUser(familyTree:FamilyTree){
     
 }
@@ -132,6 +307,7 @@ struct LoveView: View {
     ]
     @ObservedObject var familyTree:FamilyTree
     @ObservedObject var family:Family = Family()
+    @ObservedObject var miss:Miss
     let imgsLove = ["big love","Like","love2"]
     @State var who = -1
     @State var member = ["我","爸爸","妈妈","爷爷","奶奶","外婆","外公","孙子","孙女","舅舅"]
@@ -214,8 +390,6 @@ struct LoveView: View {
                             .shadow(color: Color("AccentColor"), radius: 3, x: 0.5, y: 0.5)
 //                            .overlay(RoundedRectangle(cornerRadius: 15.0, style: .continuous).stroke(Color.init(red: 255/255, green: 169/255, blue: 54/255),lineWidth: 2.0))
                                                 .padding(EdgeInsets(top: 5, leading: 0, bottom: 5, trailing: 0))
-                                                
-                           
                         }
                     })
                     }.frame(width:390)
@@ -241,15 +415,31 @@ struct LoveView: View {
                             todo.save { (result) in
                                 switch result {
                                 case .success:
-                                    
+                                    do{
+                                    let insertMiss = LCObject(className:"Miss")
+                                     try insertMiss.set("familyId",value:familyTree.familyTreeId)
+                                        try insertMiss.set("sender", value: objectId!)
+                                        try insertMiss.set("receiver",value: familyTree.familyMember[who].objectId!)
+                                        insertMiss.save{(result) in
+                                            switch result {
+                                            case .success:
+                                                    break;
+                                            case .failure(error:  let error):
+                                                print(error)
+                                            }
+                                        }
+                                    }catch{
+                                        print(error)
+                                    }
                                     break
                                 case .failure(error: let error):
                                     print(error)
-                                }
+                                    }
                             }
-                        } catch {
-                            print(error)
-                        }
+                                } catch {
+                                    print(error)
+                                }
+                            
                         self.present.toggle()
                     }){
                         HStack {
@@ -320,13 +510,13 @@ struct LoveView: View {
                                      k = checkDiff(date: updateT!)
                                     }
                                     if(k>=1||(updateT)==nil){
-                                        familyTree.missNum = familyTree.missNum + 5
+                                        familyTree.missNum = familyTree.missNum + 3
                                         do {
                                             let objectId = LCApplication.default.currentUser?.objectId?.value
                                             let todo = LCObject(className: "_User",objectId: objectId!)
                                             try todo.set("missNum", value: familyTree.missNum)
                                             try todo.set("missUpdate",value: Date())
-                                            todo.save { (result) in
+                                            todo.save { result in
                                                 switch result {
                                                 case .success:
                                                     break
@@ -337,7 +527,7 @@ struct LoveView: View {
                                         } catch {
                                             print(error)
                                         }
-                                        content = "今日领取5张思念券成功"
+                                        content = "今日领取3张思念券成功"
                                     }else{
                                         content = "请明天再领取思念卷"
                                     }
@@ -436,35 +626,64 @@ struct LoveView: View {
                 }
                 VStack{
                     HStack{
-                        Text("我收到的今日思念")
-                            .font(.system(size: 20))
-                        Spacer()
-                    }.padding(EdgeInsets(top: 10, leading: 20, bottom: 5, trailing: 10))
-                    HStack{
-                        Text("爷爷向你寄送了两份思念")
-                            .foregroundColor(.gray)
-                            .padding(EdgeInsets(top: 5, leading: 20, bottom: 5, trailing: 10))
-                        Image("new")
-                        Spacer()
-                        Text("AM09:41").foregroundColor(.gray)
-                            .padding(EdgeInsets(top: 5, leading: 20, bottom: 5, trailing: 20))
+                              Text("我收到的今日思念")
+                                  .font(.system(size: 20))
+                              Spacer()
+                          }.padding(EdgeInsets(top: 10, leading: 20, bottom: 5, trailing: 10))
+                    if(miss.Content.count==0){
+                        HStack{
+                                             
+                                                Text("今日还没有人发送给你思念哦")
+                                                   .foregroundColor(.gray)
+                                                   .padding(EdgeInsets(top: 5, leading: 20, bottom: 5, trailing: 10))
+                                               
+                                           }
+                                           Divider().padding(EdgeInsets(top: 0, leading: 20, bottom: 5, trailing: 20))
+                    }else{
+                        ForEach(0..<miss.Content.count,id: \.self){ index in
+                            HStack{
+                                Text(miss.Content[index])
+                                                        .foregroundColor(.gray)
+                                                        .padding(EdgeInsets(top: 5, leading: 20, bottom: 5, trailing: 10))
+                                                    Image("new")
+                                                    Spacer()
+                                Text("\(miss.dateTime[index])").foregroundColor(.gray)
+                                                        .padding(EdgeInsets(top: 5, leading: 20, bottom: 5, trailing: 20))
+                                                }
+                                                Divider().padding(EdgeInsets(top: 0, leading: 20, bottom: 5, trailing: 20))
+                        }
                     }
-                    Divider().padding(EdgeInsets(top: 0, leading: 20, bottom: 5, trailing: 20))
-                    HStack{
-                        Text("妈妈亲了你一下，送了一份思念")
-                            .foregroundColor(.gray)
-                            .padding(EdgeInsets(top: 5, leading: 20, bottom: 5, trailing: 10))
-                        Spacer()
-                        Text("AM08:45").foregroundColor(.gray)
-                            .padding(EdgeInsets(top: 5, leading: 20, bottom: 5, trailing: 20))
-                    }
-                    Divider().padding(EdgeInsets(top: 0, leading: 20, bottom: 5, trailing: 20))
+//                    HStack{
+//                        Text("我收到的今日思念")
+//                            .font(.system(size: 20))
+//                        Spacer()
+//                    }.padding(EdgeInsets(top: 10, leading: 20, bottom: 5, trailing: 10))
+//                    HStack{
+//                        Text("爷爷向你寄送了两份思念")
+//                            .foregroundColor(.gray)
+//                            .padding(EdgeInsets(top: 5, leading: 20, bottom: 5, trailing: 10))
+//                        Image("new")
+//                        Spacer()
+//                        Text("AM09:41").foregroundColor(.gray)
+//                            .padding(EdgeInsets(top: 5, leading: 20, bottom: 5, trailing: 20))
+//                    }
+//                    Divider().padding(EdgeInsets(top: 0, leading: 20, bottom: 5, trailing: 20))
+//                    HStack{
+//                        Text("妈妈亲了你一下，送了一份思念")
+//                            .foregroundColor(.gray)
+//                            .padding(EdgeInsets(top: 5, leading: 20, bottom: 5, trailing: 10))
+//                        Spacer()
+//                        Text("AM08:45").foregroundColor(.gray)
+//                            .padding(EdgeInsets(top: 5, leading: 20, bottom: 5, trailing: 20))
+//                    }
+//                    Divider().padding(EdgeInsets(top: 0, leading: 20, bottom: 5, trailing: 20))
                     
                 }
                 HStack{
                     VStack{
                         Button(action: {
                             self.loveHistory=true
+                            
                         })
                         {
                             HStack{
@@ -508,15 +727,13 @@ struct LoveView: View {
                            
                         }
                     }
-                    
                 }
-                
                 }.frame(minWidth: 0/*@END_MENU_TOKEN@*/,  maxWidth: /*@START_MENU_TOKEN@*/.infinity/*@END_MENU_TOKEN@*/, minHeight: /*@START_MENU_TOKEN@*/0/*@END_MENU_TOKEN@*/,  maxHeight: /*@START_MENU_TOKEN@*/.infinity, alignment: .topLeading)
                 if(missSetting){
                     ZStack{
                         Rectangle().fill(Color.gray).opacity(0.5)
                     VStack{
-                        MissView( missSetting : $missSetting)
+                        MissView( missSetting : $missSetting,familyTree:familyTree)
                     }
                     }
                 }
@@ -525,7 +742,11 @@ struct LoveView: View {
                     ZStack{
                         Rectangle().fill(Color.gray).opacity(0.5)
                     VStack{
-                        LoveHistoryView( loveHistory : $loveHistory)
+                        LoveHistoryView( miss: miss, loveHistory : $loveHistory).onAppear(perform: {
+                            miss.setempty()
+                            miss.queryMissHistory()
+                            miss.queryMissByHistory()
+                        })
                     }
                     }
                 }
@@ -538,7 +759,7 @@ struct LoveView: View {
 struct LoveView_Previews: PreviewProvider {
     static var previews: some View {
         Group {
-            LoveView(familyTree: FamilyTree())
+            LoveView(familyTree: FamilyTree(),miss:Miss())
           
         }
     }

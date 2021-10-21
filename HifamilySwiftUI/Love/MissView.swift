@@ -6,6 +6,8 @@
 //
 
 import SwiftUI
+import LeanCloud
+
 struct myTextFieldStyle : TextFieldStyle{
     func _body(configuration:TextField<Self._Label>)->some View{
         HStack{
@@ -76,16 +78,17 @@ struct MissView: View {
     @State  var context : String = " "
     @State private var isUpdate = false
     @Binding var missSetting : Bool
+    @ObservedObject var familyTree:FamilyTree
+    
     var body: some View {
-        
+        GeometryReader { geometry in
         VStack {
            
             HStack{
               Text("输出你的个性思恋语句吧～")
                 Spacer()
             }.padding(EdgeInsets(top: 30, leading: 10, bottom: 10, trailing: 10))
-              
-           
+
 //                Text("妍妍")
 //                    .foregroundColor(.gray)
 //                    .padding(EdgeInsets(top: 10, leading: 10, bottom: 10, trailing: 10))
@@ -113,8 +116,22 @@ struct MissView: View {
                 Button(action: {
                     self.isUpdate = true
                     self.missSetting = false
+                    do {
+                        let objectId = LCApplication.default.currentUser?.objectId?.value
+                        let todo = LCObject(className: "_User",objectId: objectId!)
+                        try todo.set("missContent", value: context)
+                        todo.save { (result) in
+                            switch result {
+                            case .success:
+                                break
+                            case .failure(error: let error):
+                                print(error)
+                            }
+                        }
+                    } catch {
+                        print(error)
+                    }
                 }) {
-                    
                     Text("提交")
                         .frame(width: 40, height: 20, alignment: /*@START_MENU_TOKEN@*/.center/*@END_MENU_TOKEN@*/)
                         .padding(10)
@@ -124,8 +141,7 @@ struct MissView: View {
                 .padding(EdgeInsets(top:20,leading:10,bottom:20,trailing: 15))
                 .buttonStyle(DefaultButtonStyle())
             }
-            
-            
+
 //            if(isChangeInformantion){
 //                Button(action: {
 //                    self.isChangeInformantion = false
@@ -161,7 +177,7 @@ struct MissView: View {
 //            self.fold.toggle()
         }
         .overlay(RoundedRectangle(cornerRadius: 20.0, style: /*@START_MENU_TOKEN@*/.continuous/*@END_MENU_TOKEN@*/).stroke(Color.init(red: 255/255, green: 169/255, blue: 54/255),lineWidth: 1.4)).shadow(radius: 1)
-        
+        }
     }
     
 }
@@ -169,6 +185,6 @@ struct MissView: View {
 
 struct MissView_Previews: PreviewProvider {
     static var previews: some View {
-        MissView(missSetting: .constant(true))
+        MissView(missSetting: .constant(true),familyTree:FamilyTree())
     }
 }

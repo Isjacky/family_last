@@ -26,7 +26,7 @@ struct WhetherLoginBeforeUIView: View {
             .fullScreenCover(isPresented: $isLogin, onDismiss: {
                             print("Detail View Dismissed")
                         }) {
-                HomeUIView(isLogin: isLogin, isFirstLogin: $isFirstLogin, isPressed1: $isPressed1, objectId: $objectId)
+                HomeUIView(isLogin: $isLogin, isFirstLogin: $isFirstLogin, isPressed1: $isPressed1, objectId: $objectId)
                                 .opacity(isAnimating ? 1 : 0)
                                 .animation(Animation.spring().delay(0.2))
                                 .onAppear{

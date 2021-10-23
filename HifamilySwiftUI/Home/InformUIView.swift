@@ -9,18 +9,7 @@ import SwiftUI
 import LeanCloud
 
 
-struct Role: Hashable {
-    let name: String
-    let gender: String
 
-    static let roles = [
-        Role(name: "", gender: "男"),
-        Role(name: "李白", gender: "男"),
-        Role(name: "李嘉誠", gender: "男"),
-        Role(name: "彼得潘", gender: "男"),
-        Role(name: "奇妙仙子", gender: "女")
-    ]
-}
 
 struct InformUIView: View {
     @Environment(\.presentationMode) var presentationModess
@@ -42,9 +31,11 @@ struct InformUIView: View {
     
     @State var isPicker = false
     
-    @State private var selectedRole = Role.roles[0]
     @State var rolesArray = Array<String>()
-    @State private var selectedIndex = -1
+    @State private var selectedIndex:Int = 0
+    @State var treeObjectId = ""
+    
+    @Binding var treeName : String
     
     var body: some View {
         
@@ -53,27 +44,6 @@ struct InformUIView: View {
         VStack {
             //返回按钮
             Button(action: {
-                do{
-                let user = LCObject(className: "_User",objectId: (LCApplication.default.currentUser?.objectId)!)
-                    try user.set("familyPosition", value: ($selectedIndex as! LCValueConvertible))
-                    try! user.set("username",value:$username as? LCValueConvertible)
-                    user.save { (result) in
-                           switch result {
-                           case .success:
-                               break
-                           case .failure(error: let error):
-                               print(error)
-                           }
-                       }
-                    if(familyStatus == 1){
-//                        let familyTree = LCObject(className: "familyTree")
-                        
-                    }
-
-                    
-                }catch{
-                    print(error)
-                }
                 self.presentationModess.wrappedValue.dismiss()//返回的方法
             }) {
                 HStack {
@@ -127,11 +97,12 @@ struct InformUIView: View {
                         HStack {
                             Text("家庭身份")
                                 .padding(.trailing,15)
-                            if(selectedIndex == -1){
+                            if( rolesArray.count != 0 ){
+                                TextField("请选择您的家庭身份", text: $rolesArray[selectedIndex])
+                            }
+                            else{
+
                                 TextField("请选择您的家庭身份", text: /*@START_MENU_TOKEN@*//*@PLACEHOLDER=Value@*/.constant("")/*@END_MENU_TOKEN@*/)
-                            }else{
-                                Text("\(rolesArray[selectedIndex])")
-                                    
                             }
                             
                         
@@ -143,7 +114,35 @@ struct InformUIView: View {
                         if isCreater{
                             HStack {
                                 Text("家庭树名字")
-                                TextField(/*@START_MENU_TOKEN@*/"Placeholder"/*@END_MENU_TOKEN@*/, text: $familyName)
+                                TextField(/*@START_MENU_TOKEN@*/"Placeholder"/*@END_MENU_TOKEN@*/, text: $familyName,
+                                onCommit: {print("修改后的家庭树的名字:\(familyName)")
+                                    do {
+                                        let todo = LCObject(className: "familyTree", objectId: treeObjectId)
+                                        try todo.set("familyName", value: familyName)
+                                        todo.save { (result) in
+                                            switch result {
+                                            case .success:
+                                                self.treeName = familyName
+                                                print("修改名字成功了")
+                                                break
+                                            case .failure(error: let error):
+                                                print(error)
+                                            }
+                                        }
+                                        _ = todo.fetch { result in
+                                            switch result {
+                                            case .success:
+                                                // todo 已刷新
+                                                break
+                                            case .failure(error: let error):
+                                                print(error)
+                                            }
+                                        }
+                                    } catch {
+                                        print(error)
+                                    }
+                                    
+                                })
                             }
                         }
                        
@@ -158,7 +157,35 @@ struct InformUIView: View {
                         HStack {
                             Text("昵称")
                                 .padding(.trailing,15)
-                            TextField("请输入昵称", text: $username)
+                            TextField("请输入昵称", text: $username,
+                                      onCommit: {
+                                        print("用户修改后的昵称:\(username)")
+                                        do {
+                                            let todo = LCObject(className: "_User", objectId: objectId)
+                                            try todo.set("username", value: username)
+                                            todo.save { (result) in
+                                                switch result {
+                                                case .success:
+                                                    print("修改昵称成功了")
+                                                    break
+                                                case .failure(error: let error):
+                                                    print(error)
+                                                }
+                                            }
+                                            _ = todo.fetch { result in
+                                                switch result {
+                                                case .success:
+                                                    // todo 已刷新
+                                                    break
+                                                case .failure(error: let error):
+                                                    print(error)
+                                                }
+                                            }
+                                        } catch {
+                                            print(error)
+                                        }
+                                      })
+                            
                         }
                         HStack {
                             Text("手机号")
@@ -181,24 +208,41 @@ struct InformUIView: View {
                 if(isPicker){
 
                     Picker(selection: $selectedIndex, label: /*@START_MENU_TOKEN@*/Text("Picker")/*@END_MENU_TOKEN@*/) {
-                        ForEach(rolesArray.indices) { item in
+                        ForEach(rolesArray.indices, id: \.self) { item in
+                        
                                            HStack {
                                                Image(systemName: "\(item+1).circle.fill")
                                                 .foregroundColor(Color("AccentColor"))
                                                Text(rolesArray[item])
                                                 .foregroundColor(Color("AccentColor"))
                                            }
-                                           .onTapGesture {
-                                               isPicker = false
-                                           }
+                                         
                                        }
                     }
                     .offset(x:-5,y:20)
                     .frame(width: 300)
-                    .background(Color(hue: 0.105, saturation: 0.07, brightness: 0.527))
+                    .background(Color.white)
                     .cornerRadius(30)
                     .padding()
                     .shadow(color: Color("AccentColor"), radius: 3, x: 2, y: 2.0)
+                    .onTapGesture {
+                        isPicker = false
+                        do {
+                            let todo = LCObject(className: "_User", objectId: objectId)
+                            try todo.set("familyPosition", value: selectedIndex + 1)
+                            todo.save { (result) in
+                                switch result {
+                                case .success:
+                                    print("修改身份成功\(selectedIndex)")
+                                    break
+                                case .failure(error: let error):
+                                    print(error)
+                                }
+                            }
+                        } catch {
+                            print(error)
+                        }
+                    }
                     
                 }
             }
@@ -241,9 +285,28 @@ struct InformUIView: View {
         })
         
             .onAppear(){
+                //获取家庭成员关身份
+                        let familyMember = LCQuery(className: "FamilyMember")
+                        _ = familyMember.find { result in
+                            switch result {
+                            case .success(objects: let member):
+                                print(member)
+                                for item in member{
+                                    if(item.id?.intValue != 0){
+                                    let str1 = item.familyMember?.stringValue
+                                    self.rolesArray.append(str1!)
+                                    }
+                                }
+                                
+                                break
+                            case .failure(error: let error):
+                                print(error)
+                            }
+                        }
                 
                 //获取个人信息
                 let objectId = LCApplication.default.currentUser?.objectId
+                self.objectId = objectId!
                 let query = LCQuery(className: "_User")
                 let _ = query.get(objectId!) { (result) in
                     switch result {
@@ -272,7 +335,8 @@ struct InformUIView: View {
                                 case .success(objects: let tree):
                                     for item in tree{
                                     let treeName = item.familyName?.stringValue!
-                                        self.familyName = treeName!
+                                    self.familyName = treeName!
+                                    self.treeObjectId = (item.objectId?.stringValue!)!
                                     print("家庭树的名字\(familyName)")
                                     }
                                     break
@@ -286,22 +350,7 @@ struct InformUIView: View {
                     case .failure(error: let error1):
                         print(error1)
                     }
-            //获取家庭成员关身份
-                    let familyMember = LCQuery(className: "FamilyMember")
-                    _ = familyMember.find { result in
-                        switch result {
-                        case .success(objects: let member):
-                            print(member)
-                            for item in member{
-                                let str1 = item.familyMember?.stringValue
-                                self.rolesArray.append(str1!)
-                            }
-                            
-                            break
-                        case .failure(error: let error):
-                            print(error)
-                        }
-                    }
+          
                 }
                 
             }
